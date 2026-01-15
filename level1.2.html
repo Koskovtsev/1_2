@@ -77,6 +77,7 @@
 
 <body>
     <p class="mouse_coordinates"></p>
+    <p class="geoCoordinates"></p>
     <section id="main" class="main">
         <div id="div_wrapper" class="div_wrapper">
             <div id="test__black_block" class="test__black_block"></div>
@@ -107,12 +108,13 @@
 
     </section>
     <script>
+
+        /* start of mouseListener block */
         document.body.addEventListener("mousemove", function (event) {
             mouseListener(event);
         });
-        // document.getElementById("myDIV").addEventListener("mousemove", function (event) {
-        //     myFunction(event);
-        // });
+        /* end of mouseListener block */
+
         function magicDisappear() {
             document.querySelectorAll(".test__black_block").forEach(item => { item.style.display = "none" });
         }
@@ -129,17 +131,13 @@
             let blackBox = document.querySelector(".test__black_block") || document.querySelector(".hidden");
             if (!blackBox) {
                 for (let i = 0; i < 5; i++) {
-                    blackBox = document.createElement("div");
-                    blackBox.id = ("test__black_block");
-                    blackBox.className = ("test__black_block");
-                    blackBox.style.width = "100px";
-                    blackBox.style.height = "100px";
-                    blackBox.style.backgroundColor = "blue";
-                    mainDiv.append(blackBox);
+                    blackBox = document.createElement("div"); blackBox.id = ("test__black_block");
+                    blackBox.className = ("test__black_block"); blackBox.style.width = "100px"; blackBox.style.height = "100px";
+                    blackBox.style.backgroundColor = "blue"; mainDiv.append(blackBox);
                 }
             } else {
-                let isHiden = (blackBox.style.display === "none") || (blackBox.classList.contains("hidden"));
-                if (isHiden) {
+                let
+                isHiden = (blackBox.style.display === "none") || (blackBox.classList.contains("hidden")); if (isHiden) {
                     document.querySelectorAll(".hidden").forEach(item => item.className = "test__black_block");
                     document.querySelectorAll(".test__black_block").forEach(item => item.style.display = "");
                     document.getElementById("test__black_block").style.display = "";
@@ -201,10 +199,27 @@
             let mouseX = event.clientX;
             let mouseY = event.clientY;
             let language = navigator.language;
-            let latitude = 
-            document.querySelector(".mouse_coordinates").innerHTML = "X: " + mouseX + ", Y: " + mouseY + "<br>" + language + "<br>" + ;
+            let latitude =
+                document.querySelector(".mouse_coordinates").innerHTML = "X: " + mouseX + ", Y: " + mouseY + "<br>" + language +
+                "<br>";
 
         }
+        
+        /* start of geolocation block */
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+        } else {
+            document.querySelector(".geoCoordinates").innerHTML =
+                "Geolocation is not supported by this browser.";
+        }
+
+        function showPosition(position) {
+            document.querySelector(".geoCoordinates").innerHTML =
+                "Ш: " + position.coords.latitude +
+                ", Д: " + position.coords.longitude;
+        }
+        /* end of geolocation block */
+
     </script>
 </body>
 
