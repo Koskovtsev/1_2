@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            max-width: 1440px;
+            width: 100%;
+            margin: 100px auto;
+        }
+
+        button {
+            margin: 10px;
+        }
+
+        .main {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .div_wrapper {
+            display: flex;
+            width: 800px;
+            padding-left: 250px;
+            height: 120px;
+            margin: 20px;
+        }
+
+        #test__black_block {
+            height: 100px;
+            width: 100px;
+            margin: 5px;
+            background-color: #000;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .yellow_box {
+            width: 100px;
+            height: 100px;
+            background-color: yellow;
+        }
+
+        .test__red_block_hover {
+            display: none;
+            width: 50px;
+            height: 50px;
+            background-color: red;
+            margin: auto 5px;
+        }
+
+        .test__green_block_input {
+            display: none;
+            width: 50px;
+            height: 20px;
+            background-color: green;
+            margin: auto 5px;
+        }
+
+        .mouse_coordinates {
+            padding-left: 80%;
+        }
+    </style>
+</head>
+
+<body>
+    <p class="mouse_coordinates"></p>
+    <section id="main" class="main">
+        <div id="div_wrapper" class="div_wrapper">
+            <div id="test__black_block" class="test__black_block"></div>
+            <div id="test__black_block" class="test__black_block"></div>
+            <div id="test__black_block" class="test__black_block"></div>
+            <div id="test__black_block" class="test__black_block"></div>
+            <div id="test__black_block" class="test__black_block"></div>
+            <div id="test__red_block_hover" class="test__red_block_hover"></div>
+            <div id="test__green_block_input" class="test__green_block_input"></div>
+        </div>
+        <div class="buttons">
+            <button class="button__display_none" onclick="magicDisappear()">
+                display NONE
+            </button>
+            <button class="button__JS_delete" onclick="magicDelete()">JS delete</button>
+            <button class="button__class_hide" onclick="magicHide()">class hide</button>
+        </div>
+        <button class="button__restore_black_block" onclick="magicRestore()" onmouseenter="redBoxUp()"
+            onmouseleave="redBoxHide()">restore box</button>
+        <label for="selector">input selector id:</label>
+        <input type="text" id="selector" class="selector" onchange="magicRestoreElement(this.value)"
+            onfocus="greenRectUp()" oninput="greenRectHide()">
+        <div id="yellow_box" class="yellow_box" onclick="showAlert(this)"></div>
+        <label for="images">input link for image</label>
+        <textarea id="images_link" name="images_link" rows="4" cols="100"></textarea>
+        <input type="submit" value="Load images" onclick="addImageToPage()">
+        <!-- <input type="text" id="images_link" class="images_link" onchange="addImageToPage(this.value)"> -->
+
+    </section>
+    <script>
+        document.body.addEventListener("mousemove", function (event) {
+            mouseListener(event);
+        });
+        // document.getElementById("myDIV").addEventListener("mousemove", function (event) {
+        //     myFunction(event);
+        // });
+        function magicDisappear() {
+            document.querySelectorAll(".test__black_block").forEach(item => { item.style.display = "none" });
+        }
+        function magicDelete() {
+            document.querySelectorAll(".test__black_block").forEach(item => item.remove());
+            // document.getElementById("test__black_block").remove();
+        }
+        function magicHide() {
+            document.querySelectorAll(".test__black_block").forEach(item => item.className = "hidden");
+            // document.getElementById("test__black_block").className = "hidden";
+        }
+        function magicRestore() {
+            let mainDiv = document.getElementById("div_wrapper");
+            let blackBox = document.querySelector(".test__black_block") || document.querySelector(".hidden");
+            if (!blackBox) {
+                for (let i = 0; i < 5; i++) {
+                    blackBox = document.createElement("div");
+                    blackBox.id = ("test__black_block");
+                    blackBox.className = ("test__black_block");
+                    blackBox.style.width = "100px";
+                    blackBox.style.height = "100px";
+                    blackBox.style.backgroundColor = "blue";
+                    mainDiv.append(blackBox);
+                }
+            } else {
+                let isHiden = (blackBox.style.display === "none") || (blackBox.classList.contains("hidden"));
+                if (isHiden) {
+                    document.querySelectorAll(".hidden").forEach(item => item.className = "test__black_block");
+                    document.querySelectorAll(".test__black_block").forEach(item => item.style.display = "");
+                    document.getElementById("test__black_block").style.display = "";
+                } else {
+                    magicDisappear();
+                }
+            }
+        }
+        function magicRestoreElement(value) {
+            let inputElement = document.getElementById("selector");
+            document.querySelectorAll("." + value).forEach(item => item.remove());
+            inputElement.value = "";
+        }
+        function addImageToPage() {
+            let mainSection = document.getElementById("main");
+            let textArea = document.getElementById("images_link").value;
+            if (textArea.length === 0) {
+                alert("enter url of image");
+                return;
+            }
+            let links = textArea.split('\n');
+            links.forEach(item => {
+                if (item.trim()) {
+                    let image = document.createElement("img");
+                    image.src = item;
+                    image.alt = item;
+                    image.style.width = "300px";
+                    mainSection.append(image);
+                }
+            });
+            document.getElementById("images_link").value = "";
+        }
+
+        function showAlert(element) {
+            let isHelloMessage = element.getAttribute("onclick").includes("showAlert");
+            if (isHelloMessage) {
+                alert("Привіт");
+                element.setAttribute("onclick", "hideBox(this)");
+            } else {
+                hideBox();
+            }
+        }
+        function hideBox(element) {
+            element.style.display = "none";
+        }
+        function redBoxUp() {
+            document.getElementById("test__red_block_hover").style.display = "block";
+        }
+        function redBoxHide() {
+            document.getElementById("test__red_block_hover").style.display = "none";
+        }
+        function greenRectUp() {
+            document.getElementById("test__green_block_input").style.display = "block";
+        }
+        function greenRectHide() {
+            document.getElementById("test__green_block_input").style.display = "none";
+        }
+        function mouseListener(event) {
+            let mouseX = event.clientX;
+            let mouseY = event.clientY;
+            let language = navigator.language;
+            let latitude = 
+            document.querySelector(".mouse_coordinates").innerHTML = "X: " + mouseX + ", Y: " + mouseY + "<br>" + language + "<br>" + ;
+
+        }
+    </script>
+</body>
+
+</html>
