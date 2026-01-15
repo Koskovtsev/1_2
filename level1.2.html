@@ -104,8 +104,15 @@
         <label for="images">input link for image</label>
         <textarea id="images_link" name="images_link" rows="4" cols="100"></textarea>
         <input type="submit" value="Load images" onclick="addImageToPage()">
-        <!-- <input type="text" id="images_link" class="images_link" onchange="addImageToPage(this.value)"> -->
-
+        <div contenteditable="true" class="editor_via_localStorage">
+            LocalStorage: Натисни на мене і почни писати...
+        </div>
+        <div contenteditable="true" class="editor_via_cookie">
+            Cookie: Натисни на мене і почни писати...
+        </div>
+        <div contenteditable="true" class="editor_via_sessionStorage">
+            SessionStorage: Натисни на мене і почни писати...
+        </div>
     </section>
     <script>
 
@@ -137,11 +144,11 @@
                 }
             } else {
                 let
-                isHiden = (blackBox.style.display === "none") || (blackBox.classList.contains("hidden")); if (isHiden) {
-                    document.querySelectorAll(".hidden").forEach(item => item.className = "test__black_block");
-                    document.querySelectorAll(".test__black_block").forEach(item => item.style.display = "");
-                    document.getElementById("test__black_block").style.display = "";
-                } else {
+                    isHiden = (blackBox.style.display === "none") || (blackBox.classList.contains("hidden")); if (isHiden) {
+                        document.querySelectorAll(".hidden").forEach(item => item.className = "test__black_block");
+                        document.querySelectorAll(".test__black_block").forEach(item => item.style.display = "");
+                        document.getElementById("test__black_block").style.display = "";
+                    } else {
                     magicDisappear();
                 }
             }
@@ -204,7 +211,7 @@
                 "<br>";
 
         }
-        
+
         /* start of geolocation block */
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(showPosition);
