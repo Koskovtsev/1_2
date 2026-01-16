@@ -75,7 +75,7 @@
     </style>
 </head>
 
-<body>
+<body onload="loadCahngesToTextFrames()">
     <p class="mouse_coordinates"></p>
     <p class="geoCoordinates"></p>
     <section id="main" class="main">
@@ -104,8 +104,7 @@
         <label for="images">input link for image</label>
         <textarea id="images_link" name="images_link" rows="4" cols="100"></textarea>
         <input type="submit" value="Load images" onclick="addImageToPage()">
-        <div contenteditable="true" class="editor_via_localStorage">
-            LocalStorage: Натисни на мене і почни писати...
+        <div contenteditable="true" class="editor_via_localStorage" oninput="saveChangesToLocalStorage(this.innerHTML)">
         </div>
         <div contenteditable="true" class="editor_via_cookie">
             Cookie: Натисни на мене і почни писати...
@@ -115,6 +114,24 @@
         </div>
     </section>
     <script>
+        let defaultText = "Натисни на мене і почни писати...";
+        // saveLoadChangesToLocalStorage(defaultText);
+        function loadCahngesToTextFrames() {
+            let savedText = localStorage.getItem("newText");
+            let textElement = document.querySelector(".editor_via_localStorage");
+            if (savedText) {
+                textElement.innerHTML = savedText;
+            } else {
+                textElement.innerHTML = defaultText;
+            }
+        }
+        function saveChangesToLocalStorage(text) {
+            let textElement = document.querySelector(".editor_via_localStorage");
+            if (text !== defaultText) {
+                localStorage.setItem("newText", text);
+            }
+
+        }
 
         /* start of mouseListener block */
         document.body.addEventListener("mousemove", function (event) {
