@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             max-width: 1440px;
             width: 100%;
@@ -21,6 +25,7 @@
             align-items: center;
             flex-direction: column;
             gap: 10px;
+            position: relative;
         }
 
         .hidden {
@@ -72,13 +77,63 @@
         .mouse_coordinates {
             padding-left: 80%;
         }
+
+        .to_up_btn {
+            display: none;
+            position: absolute;
+            top: 90%;
+            right: 10%;
+            width: 100px;
+            height: 30px;
+        }
+
+        .alert_block {
+            width: 200px;
+            height: 200px;
+            background-color: #aaa;
+        }
+
+        .inner_alert_block {
+            width: 100px;
+            height: 100px;
+            background-color: #00ff00;
+            margin: 25% auto;
+        }
+
+        .advertising {
+            display: none;
+            background-color: gray;
+            position: fixed;
+            top: -10%;
+            opacity: 0.5;
+            width: 100vw;
+            height: 200%;
+            z-index: 9999;
+            cursor: pointer;
+        }
+
+        .drag_n_drop__form {
+            height: 300px;
+            width: 300px;
+            background-color: #ffffcc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .drug_n_drop__input {
+            display: flex !important;
+            flex-direction: column !important;
+            text-align: center !important;
+        }
     </style>
 </head>
 
-<body onload="loadCahngesToTextFrames(); checkCookie(), getCookie()">
+<body>
     <p class="mouse_coordinates"></p>
     <p class="geoCoordinates"></p>
     <section id="main" class="main">
+        <button class="to_up_btn" onclick="goToUp()">нагору</button>
         <div id="div_wrapper" class="div_wrapper">
             <div id="test__black_block" class="test__black_block"></div>
             <div id="test__black_block" class="test__black_block"></div>
@@ -113,9 +168,56 @@
         <div contenteditable="true" class="editor_via_sessionStorage" oninput="saveChangesToStorage(this)">
             Натисни на мене і почни писати...
         </div>
+        <div class="alert_block" onclick="callAlert(event)">
+            <div class="inner_alert_block" onclick="callAlert(event)">
+                <p> CLICK ME </p>
+            </div>
+        </div>
+        <button class="show_advert" onclick="showAdvert()">РЕКЛАМА</button>
+        <div class="advertising" onclick="closeAdvert()"></div>
+        <form class="myForm"><input type="submit" value="GO"></form>
+        <form class="drag_n_drop__form" ondragover="dragOverEvent(element)" ondrop="dropEvent(element)">
+            <input type="file" class="drug_n_drop__input" value="Send file">
+        </form>
     </section>
     <script>
+        function dropEvent(element) {
+            element.preventDefault();
+            
+        }
+        function dragOverEvent(element){
+            element.preventDefault();
+        }
+        document.querySelector(".myForm").addEventListener('submit', function (event) {
+            event.preventDefault();
+        });
+        function showAdvert() {
+            document.querySelector(".advertising").style.display = "block";
+            document.body.style.overflow = "hidden";
+        }
+        function closeAdvert() {
+            document.querySelector(".advertising").style.display = "none";
+            document.body.style.overflow = "";
+        }
+
+        function callAlert(event) {
+            event.stopPropagation();
+            alert("u pushed the button!");
+        }
+        window.onscroll = function () { showToUpButton() };
+        function showToUpButton() {
+            document.querySelector(".to_up_btn").style.display = "block";
+            document.querySelector(".to_up_btn").style.position = "fixed";
+        }
+        function goToUp() {
+            window.scrollTo(0, 0);
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCahngesToTextFrames();
+            checkCookie();
+        });
         let defaultText = "Натисни на мене і почни писати...";
+        /* block for localStorage and sessionStorage */
         function loadCahngesToTextFrames() {
             let savedLocalText = localStorage.getItem("newText");
             document.querySelector(".editor_via_localStorage").innerHTML = savedLocalText || defaultText;
@@ -130,34 +232,16 @@
                 storage.setItem("newText", element.innerHTML);
             }
         }
+        /* end of localStorage/sessionStorage block */
 
-        /* Start cookies block */
+        /* block for cookies */
         function setCookie(cvalue) {
             const d = new Date();
             let exdays = 3;
             d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
             let expires = "expires=" + d.toUTCString();
-            document.cookie = "newText" + "=" + cvalue + ";" + expires + ";path=/";
-            alert("cookies is set.");
-            alert("here they are: " + getCookie("newText") + "  !");
+            document.cookie = "newText" + "=" + encodeURIComponent(cvalue) + ";" + expires + ";path=/";
         }
-
-        // function getCookie(cname) {
-        //     let name = cname + "=";
-        //     let decodedCookie = decodeURIComponent(document.cookie);
-        //     let ca = decodedCookie.split(';');
-        //     for (let i = 0; i < ca.length; i++) {
-        //         let c = ca[i];
-        //         while (c.charAt(0) == ' ') {
-        //             c = c.substring(1);
-        //         }
-        //         if (c.indexOf(name) == 0) {
-        //             alert("try to return decoded cookies");
-        //             return c.substring(name.length, c.length);
-        //         }
-        //     }
-        // }
-
         function getCookie(name) {
             let matches = document.cookie.match(new RegExp(
                 "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
@@ -167,20 +251,13 @@
         function checkCookie() {
             let user = getCookie("newText");
             if (user !== defaultText) {
-                alert("Welcome again " + user);
                 document.querySelector(".editor_via_cookie").innerHTML = user;
             }
-            //  else {
-            //     user = prompt("Please enter your name:", "");
-            //     if (user != "" && user != null) {
-            //         setCookie("username", user, 30);
-            //     }
-            // }
         }
         /* end cookies block */
 
 
-        /* start of mouseListener block */
+        /* block for mouseListener */
         document.body.addEventListener("mousemove", function (event) {
             mouseListener(event);
         });
