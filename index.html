@@ -75,7 +75,7 @@
     </style>
 </head>
 
-<body onload="loadCahngesToTextFrames()">
+<body onload="loadCahngesToTextFrames(); checkCookie(), getCookie()">
     <p class="mouse_coordinates"></p>
     <p class="geoCoordinates"></p>
     <section id="main" class="main">
@@ -104,34 +104,81 @@
         <label for="images">input link for image</label>
         <textarea id="images_link" name="images_link" rows="4" cols="100"></textarea>
         <input type="submit" value="Load images" onclick="addImageToPage()">
-        <div contenteditable="true" class="editor_via_localStorage" oninput="saveChangesToLocalStorage(this.innerHTML)">
+        <div contenteditable="true" class="editor_via_localStorage" oninput="saveChangesToStorage(this)">
+            Натисни на мене і почни писати...
         </div>
-        <div contenteditable="true" class="editor_via_cookie">
-            Cookie: Натисни на мене і почни писати...
+        <div contenteditable="true" class="editor_via_cookie" oninput="setCookie(this.innerHTML)">
+            Натисни на мене і почни писати...
         </div>
-        <div contenteditable="true" class="editor_via_sessionStorage">
-            SessionStorage: Натисни на мене і почни писати...
+        <div contenteditable="true" class="editor_via_sessionStorage" oninput="saveChangesToStorage(this)">
+            Натисни на мене і почни писати...
         </div>
     </section>
     <script>
         let defaultText = "Натисни на мене і почни писати...";
-        // saveLoadChangesToLocalStorage(defaultText);
         function loadCahngesToTextFrames() {
-            let savedText = localStorage.getItem("newText");
-            let textElement = document.querySelector(".editor_via_localStorage");
-            if (savedText) {
-                textElement.innerHTML = savedText;
-            } else {
-                textElement.innerHTML = defaultText;
+            let savedLocalText = localStorage.getItem("newText");
+            document.querySelector(".editor_via_localStorage").innerHTML = savedLocalText || defaultText;
+            let savedSessionText = sessionStorage.getItem("newText");
+            document.querySelector(".editor_via_sessionStorage").innerHTML = savedSessionText || defaultText;
+        }
+        function saveChangesToStorage(element) {
+            let localEditor = document.querySelector(".editor_via_localStorage");
+            let sessionEditor = document.querySelector(".editor_via_sessionStorage");
+            if (element.innerHTML !== defaultText) {
+                const storage = (element === localEditor) ? localStorage : sessionStorage;
+                storage.setItem("newText", element.innerHTML);
             }
         }
-        function saveChangesToLocalStorage(text) {
-            let textElement = document.querySelector(".editor_via_localStorage");
-            if (text !== defaultText) {
-                localStorage.setItem("newText", text);
-            }
 
+        /* Start cookies block */
+        function setCookie(cvalue) {
+            const d = new Date();
+            let exdays = 3;
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            let expires = "expires=" + d.toUTCString();
+            document.cookie = "newText" + "=" + cvalue + ";" + expires + ";path=/";
+            alert("cookies is set.");
+            alert("here they are: " + getCookie("newText") + "  !");
         }
+
+        // function getCookie(cname) {
+        //     let name = cname + "=";
+        //     let decodedCookie = decodeURIComponent(document.cookie);
+        //     let ca = decodedCookie.split(';');
+        //     for (let i = 0; i < ca.length; i++) {
+        //         let c = ca[i];
+        //         while (c.charAt(0) == ' ') {
+        //             c = c.substring(1);
+        //         }
+        //         if (c.indexOf(name) == 0) {
+        //             alert("try to return decoded cookies");
+        //             return c.substring(name.length, c.length);
+        //         }
+        //     }
+        // }
+
+        function getCookie(name) {
+            let matches = document.cookie.match(new RegExp(
+                "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+            ));
+            return matches ? decodeURIComponent(matches[1]) : undefined;
+        }
+        function checkCookie() {
+            let user = getCookie("newText");
+            if (user !== defaultText) {
+                alert("Welcome again " + user);
+                document.querySelector(".editor_via_cookie").innerHTML = user;
+            }
+            //  else {
+            //     user = prompt("Please enter your name:", "");
+            //     if (user != "" && user != null) {
+            //         setCookie("username", user, 30);
+            //     }
+            // }
+        }
+        /* end cookies block */
+
 
         /* start of mouseListener block */
         document.body.addEventListener("mousemove", function (event) {
@@ -226,22 +273,21 @@
             let latitude =
                 document.querySelector(".mouse_coordinates").innerHTML = "X: " + mouseX + ", Y: " + mouseY + "<br>" + language +
                 "<br>";
-
         }
 
         /* start of geolocation block */
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPosition);
-        } else {
-            document.querySelector(".geoCoordinates").innerHTML =
-                "Geolocation is not supported by this browser.";
-        }
+        // if (navigator.geolocation) {
+        //     navigator.geolocation.getCurrentPosition(showPosition);
+        // } else {
+        //     document.querySelector(".geoCoordinates").innerHTML =
+        //         "Geolocation is not supported by this browser.";
+        // }
 
-        function showPosition(position) {
-            document.querySelector(".geoCoordinates").innerHTML =
-                "Ш: " + position.coords.latitude +
-                ", Д: " + position.coords.longitude;
-        }
+        // function showPosition(position) {
+        //     document.querySelector(".geoCoordinates").innerHTML =
+        //         "Ш: " + position.coords.latitude +
+        //         ", Д: " + position.coords.longitude;
+        // }
         /* end of geolocation block */
 
     </script>
