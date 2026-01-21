@@ -115,16 +115,18 @@
         .drag_n_drop__form {
             height: 300px;
             width: 300px;
-            background-color: #ffffcc;
+            background-color: #f2f2c5;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
         .drug_n_drop__input {
-            display: flex !important;
-            flex-direction: column !important;
-            text-align: center !important;
+            text-align: center;
+        }
+
+        .droped_file {
+            display: none;
         }
     </style>
 </head>
@@ -176,21 +178,54 @@
         <button class="show_advert" onclick="showAdvert()">РЕКЛАМА</button>
         <div class="advertising" onclick="closeAdvert()"></div>
         <form class="myForm"><input type="submit" value="GO"></form>
-        <form class="drag_n_drop__form" ondragover="dragOverEvent(element)" ondrop="dropEvent(element)">
-            <input type="file" class="drug_n_drop__input" value="Send file">
+        <form class="drag_n_drop__form" ondragover="dragOverEvent(event)" ondragleave="dragLeaveEvent(event)"
+            ondrop="dropEvent(event)">
+            <input type="file" class="drug_n_drop__input" value="Send file" onchange="fileAdded(this)">
+            <p class="droped_file"></p>
         </form>
     </section>
     <script>
-        function dropEvent(element) {
-            element.preventDefault();
-            
+
+        function fileAdded(element) {
+            const droppedFiles = element.files;
+            if (droppedFiles.length > 0) {
+                let inputDnDElement = document.querySelector(".drug_n_drop__input");
+                inputDnDElement.style.display = "none";
+                let displayFileName = document.querySelector(".droped_file");
+                displayFileName.style.display = "block";
+                displayFileName.innerHTML = droppedFiles[0].name;
+                inputDnDElement.parentElement.style.backgroundColor = "#adad11";
+            }
         }
-        function dragOverEvent(element){
-            element.preventDefault();
+
+        function dropEvent(e) {
+            e.preventDefault();
+            const droppedFiles = e.dataTransfer.files;
+            let inputDnDElement = document.querySelector(".drug_n_drop__input");
+            if (droppedFiles.length > 0) {
+                inputDnDElement.files = droppedFiles;
+            }
+
+            inputDnDElement.style.display = "none";
+            let displayFileName = document.querySelector(".droped_file");
+            displayFileName.style.display = "block";
+            displayFileName.innerHTML = droppedFiles[0].name;
         }
+        function dragLeaveEvent(e) {
+            e.preventDefault();
+            e.currentTarget.style.backgroundColor = "#f2f288";
+        }
+        function dragOverEvent(e) {
+            e.preventDefault();
+            e.currentTarget.style.backgroundColor = "#adad11";
+        }
+
         document.querySelector(".myForm").addEventListener('submit', function (event) {
             event.preventDefault();
         });
+
+
+
         function showAdvert() {
             document.querySelector(".advertising").style.display = "block";
             document.body.style.overflow = "hidden";
