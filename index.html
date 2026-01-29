@@ -11,8 +11,20 @@
 
     <script>
         "use strict"
-        function csvHandler(csvText) {
+        const csvText =
+            `48.30,32.16,Кропивницький,200000,
+            44.38, 34.33, Алушта, 31440,
+            49.46, 30.17, Біла Церква, 200131,
+            49.54, 28.49, Бердичів, 87575, #некоммент
 
+            #
+            46.49, 36.58, #Бердянськ, 121692,
+            49.15, 28.41, Вінниця, 356665,
+            #45.40, 34.29, Джанкой, 43343,
+
+            # в цьому файлі три рядки - коментаря :) `;
+        const textToChange = "Я перший раз у місті Кропивницький і другий раз у місті Алушта";
+        function csvHandler() {
             let linesArray = csvText.trim().split(`\n`);
             console.log(linesArray.length + " _ " + linesArray);
             let filteredLine = linesArray
@@ -25,7 +37,7 @@
                 return {
                     x: +elem[0],
                     y: +elem[1],
-                    cityName: elem[2],
+                    cityName: elem[2].replace(/[^а-яіїєґ\-\'\’]/gi, ""),
                     cityPopulation: +elem[3]
                 }
             });
@@ -33,35 +45,38 @@
             let top10Cities = cityesData
                 .sort((a, b) => a.cityPopulation > b.cityPopulation ? -1 : 1)
                 .slice(0, 10);
-            let top10CitiesWithRate = top10Cities.reduce((city, index) => {
-                name = cityName;
-                city[name] = {
-                    population: cityPopulation,
+            let top10CitiesWithRate = top10Cities.reduce((acc, city, index) => {
+                name = city.cityName.toLowerCase();
+                acc[name] = {
+                    population: city.cityPopulation,
                     rate: index + 1
                 }
-                return city;
-            }, 1);
-            console.log(top10Cities.length + " _ " + top10Cities.map((city) => city.x));
-            top10CitiesWithRate.forEach(elem => console.log(elem));
-
-            return function csvModifier(textThatMustBeAdded) {
-
+                return acc;
+            }, {});
+            console.log(top10CitiesWithRate);
+            return function (textThatMustBeChanged) {
+                let textArray = textThatMustBeChanged.split(' ');
+                textArray.filter
+                const pattern = new RegExp(top10CitiesWithRate.name, "gi");
+                pattern.replace()
+                // alert(top10CitiesWithRate[pattern]);
+                return textThatMustBeChanged.replace(pattern,
+                    /*top10CitiesWithRate.name + */`(... місце в ТОП-10 найбільших міст України, 
+                населення ... люд(ина/ини/ей))`);
             }
         }
-        const csvTest =
-            `48.30,32.16,Кропивницький,200000,
-            44.38, 34.33, Алушта, 31440,
-            49.46, 30.17, Біла Церква, 200131,
-            49.54, 28.49, Бердичів, 87575, #некоммент
 
-            #
-            46.49, 36.58, #Бердянськ, 121692,
-            49.15, 28.41, Вінниця, 356665,
-            #45.40, 34.29, Джанкой, 43343,
+        alert(csvHandler()(textToChange));
 
-            # в цьому файлі три рядки - коментаря :) `;
 
-        csvHandler(csvTest);
+        let text = "hi";
+        let heroName = "Jack";
+        function sayHi() {
+            let myNewMessage = text[0].toUpperCase() + text[1];
+            myNewMessage += ", ";
+            return (name) => myNewMessage + name + "!";
+        }
+        alert(sayHi()(heroName));
     </script>
 </body>
 
