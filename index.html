@@ -1,11 +1,68 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
-    
+
+    <script>
+        "use strict"
+        function csvHandler(csvText) {
+
+            let linesArray = csvText.trim().split(`\n`);
+            console.log(linesArray.length + " _ " + linesArray);
+            let filteredLine = linesArray
+                .filter((line) => !(line.trim().startsWith('#') || line.trim() === ""));
+            filteredLine.forEach(element => {
+                console.log(element.trim());
+            });
+            let cityesData = filteredLine.map((line) => {
+                let elem = line.trim().split(',');
+                return {
+                    x: +elem[0],
+                    y: +elem[1],
+                    cityName: elem[2],
+                    cityPopulation: +elem[3]
+                }
+            });
+            console.log(cityesData[4].cityName);
+            let top10Cities = cityesData
+                .sort((a, b) => a.cityPopulation > b.cityPopulation ? -1 : 1)
+                .slice(0, 10);
+            let top10CitiesWithRate = top10Cities.reduce((city, index) => {
+                name = cityName;
+                city[name] = {
+                    population: cityPopulation,
+                    rate: index + 1
+                }
+                return city;
+            }, 1);
+            console.log(top10Cities.length + " _ " + top10Cities.map((city) => city.x));
+            top10CitiesWithRate.forEach(elem => console.log(elem));
+
+            return function csvModifier(textThatMustBeAdded) {
+
+            }
+        }
+        const csvTest =
+            `48.30,32.16,Кропивницький,200000,
+            44.38, 34.33, Алушта, 31440,
+            49.46, 30.17, Біла Церква, 200131,
+            49.54, 28.49, Бердичів, 87575, #некоммент
+
+            #
+            46.49, 36.58, #Бердянськ, 121692,
+            49.15, 28.41, Вінниця, 356665,
+            #45.40, 34.29, Джанкой, 43343,
+
+            # в цьому файлі три рядки - коментаря :) `;
+
+        csvHandler(csvTest);
+    </script>
 </body>
+
 </html>
