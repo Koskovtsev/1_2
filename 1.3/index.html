@@ -6,34 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Table</title>
     <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
-    <style>
-        #usersTable {
-            display: flex;
-            justify-content: center;
-        }
-
-        table {
-            border-collapse: collapse;
-            min-width: 100px;
-            background-color: #f9f9f9;
-            align-items: center;
-        }
-
-        th,
-        td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
-
-        thead {
-            background-color: #f2f2f2;
-        }
-
-        .otstup {
-            height: 100px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -46,9 +19,9 @@
         const config1 = {
             parent: '#usersTable',
             columns: [
-                { title: 'Вік', field: 'age' },
-                { title: 'Прізвище', field: 'surname' },
-                { title: 'Ім’я', field: 'name' },
+                { title: 'Вік', value: 'age' },
+                { title: 'Прізвище', value: 'surname' },
+                { title: 'Ім’я', value: 'name' },
             ]
         };
 
@@ -56,15 +29,11 @@
             { id: 30050, name: 'Петя', surname: 'Петров', age: 12 },
             { id: 30051, name: 'Вася', surname: 'Васечкін', age: 15 },
         ];
-        /****************TABLE ELEMENTS*************/
-
         const DOMadress = config1.parent;
-
         const table = document.querySelector(DOMadress);
         const result = DataTable(config1, users);
         console.log("result of program: ", result);
         table.innerHTML = result;
-        /****************TABLE ELEMENTS**************/
     </script>
 
 </body>
