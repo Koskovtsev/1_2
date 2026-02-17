@@ -37,27 +37,103 @@ async function DataTable(config, data, newRow) {
                     deleteElement(buttonID, targetTable, config);
                     event.target.disabled = true;
                     event.target.innerHTML = "видаляю...";
-                } else {
+                }
+                const buttonClass = event.target.getAttribute("class");
+                console.log(buttonClass);
+
+                if (buttonClass === 'add_button') {
                     event.target.innerHTML = "додаю...";
                     DataTable(config, data, true);
                 }
+                if (buttonClass === 'save_button') {
+                    console.log("trying to add....");
+                    console.log(event.target.closest('tr'));
+                    let isDataSaved = addElement(event.target.closest('tr'));
+                    if (isDataSaved) {
+                        console.log("all data is saved.");
+                        DataTable(config, data);
+                    }
+                }
             }
         });
+        table.addEventListener('keydown', (event) => {
+            const eventKey = event.key;
+            if (eventKey === 'Enter') {
+                console.log("YRAA! ENTER IS PRESSED!");
+                console.log(event.target.closest('tr'));
+                let isDataSaved = addElement(event.target.closest('tr'));
+                if (isDataSaved) {
+                    console.log("all data is saved.");
+                    DataTable(config, data);
+                }
+            }
+        });
+
         container.append(table);
     }
 }
 
-function renderInput(config){
-
-    let inputRow = config.columns.map((key) => {
-            if(key.value !== 'string'){
-                let inputName = key.value...
-                return addTags(TABLE_DATA, `<input name=${inputName}><br>(${inputName})`)             
+function getHTMLRow(attributes) {
+    let attributesKeys = Object.keys(attributes);
+    let row = "";
+    if (attributes.type === 'select') {
+        row = '<select ';
+        row += attributesKeys.map((key) => {
+            if (key !== 'options' && key !== 'type' && key !== 'label') {
+                if (key === 'required' && !attributes[key]) {
+                    return "";
+                } else {
+                    return `${key}='${attributes[key]}'`;
+                }
             }
-            return addTags(TABLE_DATA, `<input name=${key.value}><br>(${key.value})`);
+        }).join(" ");
+        row += '>';
+        row += attributes.options.map((option) => {
+            return `<option value='${option}'>${option}</option>`;
         }).join("");
-        inputRow += addTags(TABLE_DATA, `<button class="save-btn">Зберегти</button>`);
-    return addTags(TABLE_ROW, inputRow);
+        row += '</select>';
+    } else {
+        row = '<input ';
+        row += attributesKeys.map((key) => {
+            if (key !== 'label') {
+                  if (key === 'required' && !attributes[key]) {
+                    return "";
+                } else {
+                    return `${key}='${attributes[key]}'`;
+                }
+            }
+        }).join(" ");
+        row += '>';
+    }
+    return row + `<span> (${attributes.label})</span>`;
+}
+
+
+function buildElement(input, entrie) {
+    const defaultAttributes = {
+        type: 'text',
+        name: entrie.value,
+        label: entrie.title,
+        required: true
+    };
+    let elemAttributes = { ...defaultAttributes, ...input };
+
+    return getHTMLRow(elemAttributes);
+}
+
+function renderInput(config) {
+    let inputRow = config.columns.map((entrie) => {
+        if (Array.isArray(entrie.input)) {
+            let cell = entrie.input.map((inputElement) => {
+                return buildElement(inputElement, entrie);
+            }).join("");
+            return addTags(TABLE_DATA, cell);
+        }
+        return addTags(TABLE_DATA, buildElement(entrie.input, entrie));
+    }).join("");
+    inputRow += addTags(TABLE_DATA, `<button class="save_button">Зберегти</button>`);
+    // console.log("trying to add with className(input)", inputRow);
+    return addTags(TABLE_ROW, inputRow, 'input');
 }
 
 function createTableBody(config, data, newRow) {
@@ -66,8 +142,9 @@ function createTableBody(config, data, newRow) {
     if (newRow) {
         bodyRows = renderInput(config);
     }
+    // console.log("row before add...");
+    // console.log(bodyRows);
     bodyRows += data.map(([dataKey, elem]) => {
-        // elemNumber.push(dataKey);
         let row = fields.map((key) => {
             if (typeof key !== 'string') {
                 let dataValue = key(elem);
@@ -82,7 +159,9 @@ function createTableBody(config, data, newRow) {
         row += addTags(TABLE_DATA, `<button data-id=${dataKey} class="delete_button">Видалити дані</button>`);
         return addTags(TABLE_ROW, row);
     }).join("");
-    // console.log(elemNumber);
+    // console.log("after body");
+    // console.log(bodyRows);
+    // console.log("===============================================");
     return addTags(TABLE_BODY, bodyRows);
 }
 
@@ -94,8 +173,10 @@ function createTableHead(config) {
     return addTags(TABLE_HEAD, addTags(TABLE_ROW, headerRow));
 }
 
-function addElement() {
+function addElement(inputRow) {
+    // TODO: зробити якусь фігню тут. 
 
+    
 }
 
 function deleteElement(id, table, config) {
@@ -111,7 +192,10 @@ function deleteElement(id, table, config) {
     })
 }
 
-function addTags(tag, data) {
+function addTags(tag, data, className) {
+    if (className) {
+        return `<${tag} class="${className}">${data}</${tag}>`
+    }
     return `<${tag}>${data}</${tag}>`;
 }
 
@@ -129,10 +213,38 @@ function getColorLabel(color) {
 const config1 = {
     parent: '#usersTable',
     columns: [
-        { title: 'Ім’я', value: 'name' },
-        { title: 'Прізвище', value: 'surname' },
-        { title: 'Вік', value: (user) => getAge(user.birthday) },
-        { title: 'Фото', value: (user) => `<img src="${user.avatar}" alt="${user.name} ${user.surname}"/>` }
+        {
+            title: 'Ім’я',
+            value: 'name',
+            input: { type: 'text' }
+        },
+        {
+            title: 'Прізвище',
+            value: 'surname',
+            input: { type: 'text' }
+        },
+        {
+            title: 'Вік',
+            value: (user) => getAge(user.birthday),
+            input: {
+                type: 'date',
+                name: 'birthday',
+                label: 'Дата народження',
+                max: '2026-02-16',
+                min: '1900-01-01'
+            }
+        },
+        {
+            title: 'Фото',
+            value: (user) => `<img src="${user.avatar}" alt="${user.name} ${user.surname}"/>`,
+            input:
+            {
+                type: 'url',
+                name: 'avatar',
+                placeholder: 'https://images.com/photo.jpg',
+                required: false
+            }
+        }
     ],
     apiUrl: "https://mock-api.shpp.me/akoskovtsev/users"
 };
@@ -141,9 +253,24 @@ DataTable(config1);
 const config2 = {
     parent: '#productsTable',
     columns: [
-        { title: 'Назва', value: 'title' },
-        { title: 'Ціна', value: (product) => `${product.price} ${product.currency}` },
-        { title: 'Колір', value: (product) => getColorLabel(product.color) },
+        {
+            title: 'Назва',
+            value: 'title',
+            input: { type: 'text' }
+        },
+        {
+            title: 'Ціна',
+            value: (product) => `${product.price} ${product.currency}`,
+            input: [
+                { type: 'number', name: 'price', label: "Ціна" },
+                { type: 'select', name: 'currency', label: 'Валюта', options: ['$', '€', '₴'], required: false }
+            ]
+        },
+        {
+            title: 'Колір',
+            value: (product) => getColorLabel(product.color),
+            input: { type: 'color', name: 'color' }
+        },
     ],
     apiUrl: "https://mock-api.shpp.me/akoskovtsev/products"
 };
