@@ -49,9 +49,11 @@ async function DataTable(config, data, newRow) {
                     const dataID = event.target.dataset.id;
                     const urlToChange = config.apiUrl + '/' + dataID;
                     let dataToSave = getDataToSave(event.target.closest('tr'));
-                    let isDataSaved = await changeData(dataToSave, urlToChange);
-                    if (isDataSaved) {
-                        DataTable(config);
+                    if (dataToSave) {
+                        let isDataSaved = await changeData(dataToSave, urlToChange);
+                        if (isDataSaved) {
+                            DataTable(config);
+                        }
                     }
                 }
 
@@ -70,9 +72,11 @@ async function DataTable(config, data, newRow) {
                 }
                 if (buttonClass === 'save_button') {
                     let dataToSave = getDataToSave(event.target.closest('tr'));
-                    let isDataSaved = await sendData(dataToSave, config.apiUrl);
-                    if (isDataSaved) {
-                        DataTable(config);
+                    if (dataToSave) {
+                        let isDataSaved = await sendData(dataToSave, config.apiUrl);
+                        if (isDataSaved) {
+                            DataTable(config);
+                        }
                     }
                 }
             }
@@ -81,9 +85,11 @@ async function DataTable(config, data, newRow) {
             const eventKey = event.key;
             if (eventKey === 'Enter') {
                 let dataToSave = getDataToSave(event.target.closest('tr'));
-                let isDataSaved = await sendData(dataToSave, config.apiUrl);
-                if (isDataSaved) {
-                    DataTable(config);
+                if (dataToSave) {
+                    let isDataSaved = await sendData(dataToSave, config.apiUrl);
+                    if (isDataSaved) {
+                        DataTable(config);
+                    }
                 }
             }
         });
@@ -127,32 +133,14 @@ function getHTMLRow(attributes) {
 }
 
 function getValue(config, data, specInput) {
-    let result = "";
-    if (typeof config.value !== 'string') {
-        result = data[specInput.name];
-        if (specInput.type === 'date') {
-            result = result.slice(0, 10);
-        }
-    } else {
-        result = data[config.value];
+    if (typeof config.value === 'string') {
+        return data[config.value];
     }
-    return result;
+    if (specInput.type === 'date') {
+        return data[specInput.name].slice(0, 10);
+    }
+    return data[specInput.name];
 }
-
-
-function getKey(entrie, data){
-
-
-    return ;
-}
-
-//     title: 'Ціна',
-//     value: (product) => `${product.price} ${product.currency}`,
-//     input: [
-//             { type: 'number', name: 'price', label: "Ціна" },
-//             { type: 'select', name: 'currency', label: 'Валюта', options: ['$', '€', '₴'], required: false }
-//             ]
-
 
 function buildElement(input, entrie, data) {
     const defaultAttributes = {
@@ -163,77 +151,58 @@ function buildElement(input, entrie, data) {
         required: true,
     };
     let elemAttributes = { ...defaultAttributes, ...input };
-    let row = "";
-    // TODO: тернарний оператор щоб убрать let row
-    if (data) {
-        let valueAttribute = getValue(entrie, data, input);
-        valueAttribute = data[getKey(entrie)]
-        console.log(valueAttribute);
-        row = getHTMLRow({ ...elemAttributes, ...{ value: valueAttribute } });
-    } else {
-        row = getHTMLRow(elemAttributes);
+    if (!data) {
+        return getHTMLRow(elemAttributes);
     }
-    return row;
+    let valueAttribute = data[input.name || entrie.value];
+    valueAttribute = (input.type === 'date' && valueAttribute) ? valueAttribute.slice(0, 10) : valueAttribute;
+    return getHTMLRow({ ...elemAttributes, ...{ value: valueAttribute } });
 }
 
 function renderInput(config, data, id) {
-    let inputRow = config.columns.map((entrie) => {
-        if (Array.isArray(entrie.input)) {
-            let cell = entrie.input.map((inputElement) => {
-                return buildElement(inputElement, entrie, data);
-            }).join("");
-            return addTags(TABLE_DATA, cell);
-        }
-        return addTags(TABLE_DATA, buildElement(entrie.input, entrie, data));
-    }).join("");
-    if (data) {
-        inputRow += addTags(TABLE_DATA, `<button data-id=${id} class="delete_button">Видалити дані</button>`);
-        inputRow += addTags(TABLE_DATA, `<button data-id=${id} class="save_changes_button">Зберегти</button>`);
-        return inputRow;
-    } else {
-        inputRow += addTags(TABLE_DATA, `<button data-id=${id} class="cancel_button">Скасувати</button>`);
-        inputRow += addTags(TABLE_DATA, `<button class="save_button">Зберегти</button>`);
+    let cells = config.columns.map((entrie) => {
+        const inputs = Array.isArray(entrie.input) ? entrie.input : [entrie.input];
+        const cell = inputs.map((inputElement) => buildElement(inputElement, entrie, data)).join("");
+        return addTags(TABLE_DATA, cell);
+    });
+    const mode = data ? 'saveChanges' : 'addNewData';
+    cells.push(renderButtons(id, mode));
+    const content = cells.join("");
+    return data ? content : addTags(TABLE_ROW, content);
+}
+
+function checkImages(data) {
+    return typeof data === 'string' && data.includes('cloudflare') ? data.replace('cloudflare-ipfs.com', 'ipfs.io') : data;
+}
+
+function renderButtons(id, action) {
+    const modes = {
+        standartButtons: () => addTags(TABLE_DATA, `<button data-id=${id} class="delete_button">Видалити дані</button>`) +
+            addTags(TABLE_DATA, `<button data-id=${id} class="change_button">Редагувати</button>`),
+        saveChanges: () => addTags(TABLE_DATA, `<button data-id=${id} class="delete_button">Видалити дані</button>`) +
+            addTags(TABLE_DATA, `<button data-id=${id} class="save_changes_button">Зберегти</button>`),
+        addNewData: () => addTags(TABLE_DATA, `<button data-id=${id} class="cancel_button">Скасувати</button>`) +
+            addTags(TABLE_DATA, `<button class="save_button">Зберегти</button>`)
     }
-    return addTags(TABLE_ROW, inputRow);
+    return modes[action]();
 }
 
 function createTableBody(config, data, newRow) {
-    let bodyRows = "";
-    if (newRow) {
-        bodyRows = renderInput(config);
-    }
+    let bodyRows = newRow ? renderInput(config) : "";
     bodyRows += data.map(([dataKey, elem]) => {
-        let row = config.columns.map((dataField) => {
-            let dataValueAttribute = "";
+        const cells = config.columns.map(dataField => {
             let key = dataField.value;
-            dataValueAttribute = elem[key];
-            if (typeof key !== 'string') {
-                let inputData = dataField.input;
-                let classNameAttribute = "";
-                let dataValue = key(elem);
-                dataValueAttribute = dataValue;
-                if (typeof dataValue === 'string' && dataValue.includes('cloudflare')) { //TODO винести окремо перевірку
-                    dataValue = dataValue.replace('cloudflare-ipfs.com', 'ipfs.io');
-                }
-                if (Array.isArray(inputData)) {
-                    classNameAttribute = inputData.map((entrie) => {
-                        return entrie.name;
-                    }).join(" ");
-                    dataValueAttribute = inputData.map(entrie => {
-                        return elem[entrie.name];
-                    }).join(" ");
-                } else {
-                    classNameAttribute = inputData.name;
-                    dataValueAttribute = elem[inputData.name];
-                }
-                return addTags(TABLE_DATA, dataValue, classNameAttribute, dataValueAttribute);
-            } else {
-                return addTags(TABLE_DATA, elem[key], key, dataValueAttribute);
+            if (typeof key === 'string') {
+                return addTags(TABLE_DATA, elem[key], key, elem[key]);
             }
-        }).join("");
-        row += addTags(TABLE_DATA, `<button data-id=${dataKey} class="delete_button">Видалити дані</button>`);
-        row += addTags(TABLE_DATA, `<button data-id=${dataKey} class="change_button">Редагувати</button>`);
-        return addTags(TABLE_ROW, row);
+            const inputs = Array.isArray(dataField.input) ? dataField.input : [dataField.input];
+            const nameAttribute = inputs.map(entrie => entrie.name).join(" ");
+            const valueAttribute = inputs.map(entrie => elem[entrie.name]).join(" ");
+            const functionValue = checkImages(key(elem));
+            return addTags(TABLE_DATA, functionValue, nameAttribute, valueAttribute);
+        });
+        cells.push(renderButtons(dataKey, 'standartButtons'));
+        return addTags(TABLE_ROW, cells.join(""));
     }).join("");
     return addTags(TABLE_BODY, bodyRows);
 }
@@ -276,45 +245,37 @@ function deleteElement(id, config) {
 
 function getDataToSave(inputRow) {
     const inputs = inputRow.querySelectorAll('input, select');
-    const data = {};
     let isValid = true;
     inputs.forEach(input => {
-        if (input.type === 'number') {
-            data[input.name] = +input.value;
-        } else {
-            data[input.name] = input.value;
-        }
-        if (input.required && !input.value) {
+        if (!input.checkValidity()) {
             input.style.outline = "2px solid red";
             isValid = false;
         } else {
             input.style.outline = "";
         }
     });
+    const data = [...inputs].reduce((acc, input) => {
+        acc[input.name] = input.type === 'number' ? +input.value : input.value;
+        return acc;
+    }, {});
     if (isValid) {
         return data;
     }
 }
 
 function getDataFromRow(row) {
-    const rowData = row.querySelectorAll('td');
-    const data = {};
-    rowData.forEach(cell => {
-        let cellEntrieName = cell.dataset.cellid;
-        let cellEntrieValue = cell.dataset.value;
-        if (cellEntrieName) {
-            let datasetNames = cell.dataset.cellid.split(" ");
-            if (Array.isArray(datasetNames) && datasetNames.length > 1) {
-                let datasetValues = cell.dataset.value.split(" ");
-                datasetNames.forEach((entrie, index) => {
-                    data[entrie] = datasetValues[index];
-                });
-            } else {
-                data[cellEntrieName] = cellEntrieValue;
-            }
+    const rowData = Array.from(row.querySelectorAll('td'));
+    return rowData.reduce((data, cell) => {
+        const { cellid, value } = cell.dataset;
+        if (cellid) {
+            const names = cellid.split(" ");
+            const values = value.split(" ");
+            names.forEach((entrie, index) => {
+                data[entrie] = values[index] ?? "";
+            });
         }
-    });
-    return data;
+        return data;
+    }, {});
 }
 
 
