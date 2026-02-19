@@ -10,7 +10,6 @@ const TABLE_DATA = "td";
 async function DataTable(config, data, newRow) {
     if (!data) {
         let getData = await fetch(config.apiUrl).catch((error) => {
-            console.log("some error: " + error);
             return error;
         });
         let dataObjects = await getData.json();
@@ -18,8 +17,8 @@ async function DataTable(config, data, newRow) {
     }
     data.sort((a, b) => b[0] - a[0]);
     const thead = createTableHead(config);
-
     const tbody = createTableBody(config, data, newRow);
+
     const DOMadress = config.parent;
     const container = document.querySelector(config.parent);
     let table = container.querySelector('table');
@@ -29,46 +28,65 @@ async function DataTable(config, data, newRow) {
         table = document.createElement('table');
         table.className = DOMadress.slice(1);
         table.innerHTML = thead + tbody;
-        table.addEventListener('click', (event) => {
+        table.addEventListener('click', async (event) => {
             if (event.target.localName === 'button') {
-                const targetTable = event.currentTarget.getAttribute("class");
-                const buttonID = event.target.dataset.id;
-                if (buttonID) {
-                    deleteElement(buttonID, targetTable, config);
+                // TODO: прибрать всі іфи в (action) =>{ cancel =>{....}, change ={...}, save_changes{....}, delete{....}, add_new{....}, save_new{....}}
+
+                const buttonClass = event.target.getAttribute("class");
+
+                if (buttonClass === 'cancel_button') {
+                    DataTable(config);
+                }
+
+                if (buttonClass === 'change_button') {
+                    const row = event.target.closest('tr');
+                    const rowData = getDataFromRow(row);
+                    console.log("rowData: ", rowData);
+                    row.innerHTML = renderInput(config, rowData, event.target.dataset.id);
+                }
+
+                if (buttonClass === 'save_changes_button') {
+                    const dataID = event.target.dataset.id;
+                    const urlToChange = config.apiUrl + '/' + dataID;
+                    let dataToSave = getDataToSave(event.target.closest('tr'));
+                    let isDataSaved = await changeData(dataToSave, urlToChange);
+                    if (isDataSaved) {
+                        DataTable(config);
+                    }
+                }
+
+                if (buttonClass === 'delete_button') {
+                    const buttonID = event.target.dataset.id;
+                    deleteElement(buttonID, config);
                     event.target.disabled = true;
                     event.target.innerHTML = "видаляю...";
                 }
-                const buttonClass = event.target.getAttribute("class");
-                console.log(buttonClass);
 
                 if (buttonClass === 'add_button') {
                     event.target.innerHTML = "додаю...";
+                    event.target.disabled = true;
+
                     DataTable(config, data, true);
                 }
                 if (buttonClass === 'save_button') {
-                    console.log("trying to add....");
-                    console.log(event.target.closest('tr'));
-                    let isDataSaved = addElement(event.target.closest('tr'));
+                    let dataToSave = getDataToSave(event.target.closest('tr'));
+                    let isDataSaved = await sendData(dataToSave, config.apiUrl);
                     if (isDataSaved) {
-                        console.log("all data is saved.");
-                        DataTable(config, data);
+                        DataTable(config);
                     }
                 }
             }
         });
-        table.addEventListener('keydown', (event) => {
+        table.addEventListener('keydown', async (event) => {
             const eventKey = event.key;
             if (eventKey === 'Enter') {
-                console.log("YRAA! ENTER IS PRESSED!");
-                console.log(event.target.closest('tr'));
-                let isDataSaved = addElement(event.target.closest('tr'));
+                let dataToSave = getDataToSave(event.target.closest('tr'));
+                let isDataSaved = await sendData(dataToSave, config.apiUrl);
                 if (isDataSaved) {
-                    console.log("all data is saved.");
-                    DataTable(config, data);
+                    DataTable(config);
                 }
             }
         });
-
         container.append(table);
     }
 }
@@ -96,7 +114,7 @@ function getHTMLRow(attributes) {
         row = '<input ';
         row += attributesKeys.map((key) => {
             if (key !== 'label') {
-                  if (key === 'required' && !attributes[key]) {
+                if (key === 'required' && !attributes[key]) {
                     return "";
                 } else {
                     return `${key}='${attributes[key]}'`;
@@ -105,63 +123,118 @@ function getHTMLRow(attributes) {
         }).join(" ");
         row += '>';
     }
-    return row + `<span> (${attributes.label})</span>`;
+    return row;
+}
+
+function getValue(config, data, specInput) {
+    let result = "";
+    if (typeof config.value !== 'string') {
+        result = data[specInput.name];
+        if (specInput.type === 'date') {
+            result = result.slice(0, 10);
+        }
+    } else {
+        result = data[config.value];
+    }
+    return result;
 }
 
 
-function buildElement(input, entrie) {
+function getKey(entrie, data){
+
+
+    return ;
+}
+
+//     title: 'Ціна',
+//     value: (product) => `${product.price} ${product.currency}`,
+//     input: [
+//             { type: 'number', name: 'price', label: "Ціна" },
+//             { type: 'select', name: 'currency', label: 'Валюта', options: ['$', '€', '₴'], required: false }
+//             ]
+
+
+function buildElement(input, entrie, data) {
     const defaultAttributes = {
         type: 'text',
         name: entrie.value,
         label: entrie.title,
-        required: true
+        placeholder: entrie.title,
+        required: true,
     };
     let elemAttributes = { ...defaultAttributes, ...input };
-
-    return getHTMLRow(elemAttributes);
+    let row = "";
+    // TODO: тернарний оператор щоб убрать let row
+    if (data) {
+        let valueAttribute = getValue(entrie, data, input);
+        valueAttribute = data[getKey(entrie)]
+        console.log(valueAttribute);
+        row = getHTMLRow({ ...elemAttributes, ...{ value: valueAttribute } });
+    } else {
+        row = getHTMLRow(elemAttributes);
+    }
+    return row;
 }
 
-function renderInput(config) {
+function renderInput(config, data, id) {
     let inputRow = config.columns.map((entrie) => {
         if (Array.isArray(entrie.input)) {
             let cell = entrie.input.map((inputElement) => {
-                return buildElement(inputElement, entrie);
+                return buildElement(inputElement, entrie, data);
             }).join("");
             return addTags(TABLE_DATA, cell);
         }
-        return addTags(TABLE_DATA, buildElement(entrie.input, entrie));
+        return addTags(TABLE_DATA, buildElement(entrie.input, entrie, data));
     }).join("");
-    inputRow += addTags(TABLE_DATA, `<button class="save_button">Зберегти</button>`);
-    // console.log("trying to add with className(input)", inputRow);
-    return addTags(TABLE_ROW, inputRow, 'input');
+    if (data) {
+        inputRow += addTags(TABLE_DATA, `<button data-id=${id} class="delete_button">Видалити дані</button>`);
+        inputRow += addTags(TABLE_DATA, `<button data-id=${id} class="save_changes_button">Зберегти</button>`);
+        return inputRow;
+    } else {
+        inputRow += addTags(TABLE_DATA, `<button data-id=${id} class="cancel_button">Скасувати</button>`);
+        inputRow += addTags(TABLE_DATA, `<button class="save_button">Зберегти</button>`);
+    }
+    return addTags(TABLE_ROW, inputRow);
 }
 
 function createTableBody(config, data, newRow) {
-    let fields = config.columns.map((dataField) => dataField.value);
     let bodyRows = "";
     if (newRow) {
         bodyRows = renderInput(config);
     }
-    // console.log("row before add...");
-    // console.log(bodyRows);
     bodyRows += data.map(([dataKey, elem]) => {
-        let row = fields.map((key) => {
+        let row = config.columns.map((dataField) => {
+            let dataValueAttribute = "";
+            let key = dataField.value;
+            dataValueAttribute = elem[key];
             if (typeof key !== 'string') {
+                let inputData = dataField.input;
+                let classNameAttribute = "";
                 let dataValue = key(elem);
-                if (typeof dataValue === 'string' && dataValue.includes('cloudflare')) {
+                dataValueAttribute = dataValue;
+                if (typeof dataValue === 'string' && dataValue.includes('cloudflare')) { //TODO винести окремо перевірку
                     dataValue = dataValue.replace('cloudflare-ipfs.com', 'ipfs.io');
                 }
-                return addTags(TABLE_DATA, dataValue);
+                if (Array.isArray(inputData)) {
+                    classNameAttribute = inputData.map((entrie) => {
+                        return entrie.name;
+                    }).join(" ");
+                    dataValueAttribute = inputData.map(entrie => {
+                        return elem[entrie.name];
+                    }).join(" ");
+                } else {
+                    classNameAttribute = inputData.name;
+                    dataValueAttribute = elem[inputData.name];
+                }
+                return addTags(TABLE_DATA, dataValue, classNameAttribute, dataValueAttribute);
             } else {
-                return addTags(TABLE_DATA, elem[key]);
+                return addTags(TABLE_DATA, elem[key], key, dataValueAttribute);
             }
         }).join("");
         row += addTags(TABLE_DATA, `<button data-id=${dataKey} class="delete_button">Видалити дані</button>`);
+        row += addTags(TABLE_DATA, `<button data-id=${dataKey} class="change_button">Редагувати</button>`);
         return addTags(TABLE_ROW, row);
     }).join("");
-    // console.log("after body");
-    // console.log(bodyRows);
-    // console.log("===============================================");
     return addTags(TABLE_BODY, bodyRows);
 }
 
@@ -173,30 +246,83 @@ function createTableHead(config) {
     return addTags(TABLE_HEAD, addTags(TABLE_ROW, headerRow));
 }
 
-function addElement(inputRow) {
-    // TODO: зробити якусь фігню тут. 
-
-    
+async function sendData(data, url) {
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    return response.ok;
 }
 
-function deleteElement(id, table, config) {
-    console.log("clicked button #", id);
-    console.log("from table: ", table);
+async function changeData(data, url) {
+    const response = await fetch(url, {
+        method: "PUT",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    return response.ok;
+}
+
+function deleteElement(id, config) {
     fetch(config.apiUrl + `/${id}`, {
         method: "DELETE"
     }).then(res => {
         if (res.ok) {
-            console.log("all data deleted, now is ok");
             DataTable(config);
         }
     })
 }
 
-function addTags(tag, data, className) {
-    if (className) {
-        return `<${tag} class="${className}">${data}</${tag}>`
+function getDataToSave(inputRow) {
+    const inputs = inputRow.querySelectorAll('input, select');
+    const data = {};
+    let isValid = true;
+    inputs.forEach(input => {
+        if (input.type === 'number') {
+            data[input.name] = +input.value;
+        } else {
+            data[input.name] = input.value;
+        }
+        if (input.required && !input.value) {
+            input.style.outline = "2px solid red";
+            isValid = false;
+        } else {
+            input.style.outline = "";
+        }
+    });
+    if (isValid) {
+        return data;
     }
-    return `<${tag}>${data}</${tag}>`;
+}
+
+function getDataFromRow(row) {
+    const rowData = row.querySelectorAll('td');
+    const data = {};
+    rowData.forEach(cell => {
+        let cellEntrieName = cell.dataset.cellid;
+        let cellEntrieValue = cell.dataset.value;
+        if (cellEntrieName) {
+            let datasetNames = cell.dataset.cellid.split(" ");
+            if (Array.isArray(datasetNames) && datasetNames.length > 1) {
+                let datasetValues = cell.dataset.value.split(" ");
+                datasetNames.forEach((entrie, index) => {
+                    data[entrie] = datasetValues[index];
+                });
+            } else {
+                data[cellEntrieName] = cellEntrieValue;
+            }
+        }
+    });
+    return data;
+}
+
+
+function addTags(tag, data, className, dataValue) {
+    if (!className) {
+        return `<${tag}>${data}</${tag}>`;
+    }
+    return `<${tag} data-cellid="${className}" data-value="${dataValue}">${data}</${tag}>`;
 }
 
 function getAge(birthday) {
@@ -241,7 +367,7 @@ const config1 = {
             {
                 type: 'url',
                 name: 'avatar',
-                placeholder: 'https://images.com/photo.jpg',
+                placeholder: 'https://images.com/...',
                 required: false
             }
         }
@@ -250,6 +376,7 @@ const config1 = {
 };
 
 DataTable(config1);
+
 const config2 = {
     parent: '#productsTable',
     columns: [
