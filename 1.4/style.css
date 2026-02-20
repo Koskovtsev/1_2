@@ -1,0 +1,170 @@
+  :root {
+      /* Google Dark Theme Palette */
+      --bg-main: #202124;
+      /* Основний фон */
+      --bg-surface: #2d2e31;
+      /* Фон таблиці та елементів */
+      --text-primary: #e8eaed;
+      /* Світло-сірий текст */
+      --text-secondary: #9aa0a6;
+      /* Приглушений текст */
+      --accent-blue: #8ab4f8;
+      /* М'який синій акцент */
+      --border-color: #3c4043;
+      /* Тонкі межі */
+  }
+
+  body {
+      background-color: var(--bg-main);
+      margin: 0;
+      color: var(--text-primary);
+      font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  }
+
+  section {
+      display: flex;
+      flex-direction: column;
+      padding: 40px 20px;
+  }
+
+  table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      max-width: 1100px;
+      background-color: var(--bg-surface);
+      margin: 0 auto;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      table-layout: fixed;
+      border-collapse: separate;
+  }
+
+  tr {
+      height: 130px;
+      /* Встановлюємо жорстку висоту */
+  }
+
+  th {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.8px;
+      padding: 16px;
+      font-weight: 500;
+      border-bottom: 1px solid var(--border-color);
+  }
+
+  td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+      vertical-align: middle;
+  }
+
+  td,
+  th {
+      /* Дозволяємо тексту переноситись, якщо він довгий */
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-wrap: break-word;
+      height: 130px;
+      /* Дублюємо для клітинок */
+      padding: 8px 16px;
+      box-sizing: border-box;
+      vertical-align: middle;
+  }
+
+  /* Підсвічування рядка при наведенні */
+  tbody tr:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  /* Круглі аватарки */
+  img {
+      width: 100px;
+      height: 100px;
+      display: block;
+      margin: 0 auto;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+  }
+
+  /* Поля вводу в темній темі */
+  input,
+  select {
+      height: 40px;
+      /* Фіксована висота для елементів форми */
+      margin: 0;
+      background-color: #35363a;
+      color: white;
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: 4px;
+      outline: none;
+      width: 100%;
+      /* Тепер інпут завжди займає 100% ширини своєї фіксованої td */
+      max-width: 100%;
+      box-sizing: border-box;
+      /* Важливо! Враховує padding у ширині */
+  }
+
+  input:focus,
+  select:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 1px var(--accent-blue);
+  }
+
+  /* Кнопки в стилі Google */
+  button {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--accent-blue);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s, border 0.2s;
+      margin-right: 8px;
+  }
+
+  button:hover {
+      background-color: rgba(138, 180, 248, 0.08);
+      border-color: var(--accent-blue);
+  }
+
+  /* Кольорові кнопки для акцентів */
+  .delete_button {
+      color: #f28b82;
+      /* М'який червоний */
+  }
+
+  .delete_button:hover {
+      background-color: rgba(242, 139, 130, 0.08);
+      border-color: #f28b82;
+  }
+
+  .add_button {
+      background-color: var(--accent-blue);
+      color: var(--bg-main);
+      border: none;
+  }
+
+  .add_button:hover {
+      background-color: #aecbfa;
+  }
+
+  .save_button {
+      background-color: #81c995;
+      /* М'який зелений */
+      color: var(--bg-main);
+      border: none;
+  }
+
+  .cancel_button {
+      color: var(--text-secondary);
+  }

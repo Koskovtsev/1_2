@@ -8,128 +8,77 @@ const TABLE_ROW = "tr";
 const TABLE_DATA = "td";
 
 async function DataTable(config, data, newRow) {
-    if (!data) {
-        let getData = await fetch(config.apiUrl).catch((error) => {
-            return error;
-        });
-        let dataObjects = await getData.json();
-        data = Object.entries(dataObjects.data);
-    }
+    data ??= await loadData(config);
     data.sort((a, b) => b[0] - a[0]);
-    const thead = createTableHead(config);
-    const tbody = createTableBody(config, data, newRow);
-
-    const DOMadress = config.parent;
     const container = document.querySelector(config.parent);
-    let table = container.querySelector('table');
-    if (table) {
-        table.innerHTML = thead + tbody;
-    } else {
-        table = document.createElement('table');
-        table.className = DOMadress.slice(1);
-        table.innerHTML = thead + tbody;
-        table.addEventListener('click', async (event) => {
-            if (event.target.localName === 'button') {
-                // TODO: прибрать всі іфи в (action) =>{ cancel =>{....}, change ={...}, save_changes{....}, delete{....}, add_new{....}, save_new{....}}
+    let table = container.querySelector('table') || initTable(container, config, data);
+    table.innerHTML = createTableHead(config) + createTableBody(config, data, newRow);
+}
 
-                const buttonClass = event.target.getAttribute("class");
+function initTable(container, config, data) {
+    const table = document.createElement('table');
+    table.className = config.parent.slice(1);
+    table.addEventListener('click', event => handleTableAction(event, config, data));
+    table.addEventListener('keydown', async event => handleTableAction(event, config, data));
+    container.append(table);
+    return table;
+}
 
-                if (buttonClass === 'cancel_button') {
-                    DataTable(config);
-                }
-
-                if (buttonClass === 'change_button') {
-                    const row = event.target.closest('tr');
-                    const rowData = getDataFromRow(row);
-                    console.log("rowData: ", rowData);
-                    row.innerHTML = renderInput(config, rowData, event.target.dataset.id);
-                }
-
-                if (buttonClass === 'save_changes_button') {
-                    const dataID = event.target.dataset.id;
-                    const urlToChange = config.apiUrl + '/' + dataID;
-                    let dataToSave = getDataToSave(event.target.closest('tr'));
-                    if (dataToSave) {
-                        let isDataSaved = await changeData(dataToSave, urlToChange);
-                        if (isDataSaved) {
-                            DataTable(config);
-                        }
-                    }
-                }
-
-                if (buttonClass === 'delete_button') {
-                    const buttonID = event.target.dataset.id;
-                    deleteElement(buttonID, config);
-                    event.target.disabled = true;
-                    event.target.innerHTML = "видаляю...";
-                }
-
-                if (buttonClass === 'add_button') {
-                    event.target.innerHTML = "додаю...";
-                    event.target.disabled = true;
-
-                    DataTable(config, data, true);
-                }
-                if (buttonClass === 'save_button') {
-                    let dataToSave = getDataToSave(event.target.closest('tr'));
-                    if (dataToSave) {
-                        let isDataSaved = await sendData(dataToSave, config.apiUrl);
-                        if (isDataSaved) {
-                            DataTable(config);
-                        }
-                    }
-                }
-            }
-        });
-        table.addEventListener('keydown', async (event) => {
-            const eventKey = event.key;
-            if (eventKey === 'Enter') {
-                let dataToSave = getDataToSave(event.target.closest('tr'));
-                if (dataToSave) {
-                    let isDataSaved = await sendData(dataToSave, config.apiUrl);
-                    if (isDataSaved) {
-                        DataTable(config);
-                    }
-                }
-            }
-        });
-        container.append(table);
+async function loadData(config) {
+    try {
+        const response = await fetch(config.apiUrl);
+        const dataObjects = await response.json();
+        return Object.entries(dataObjects.data);
+    } catch (error) {
+        console.error("Load error", error);
+        return [];
     }
 }
 
-function getHTMLRow(attributes) {
-    let attributesKeys = Object.keys(attributes);
-    let row = "";
-    if (attributes.type === 'select') {
-        row = '<select ';
-        row += attributesKeys.map((key) => {
-            if (key !== 'options' && key !== 'type' && key !== 'label') {
-                if (key === 'required' && !attributes[key]) {
-                    return "";
-                } else {
-                    return `${key}='${attributes[key]}'`;
-                }
+async function handleTableAction(event, config, data) {
+    const target = event.target;
+    const row = target.closest('tr');
+    const url = config.apiUrl;
+    const buttonId = target.dataset.id;
+    if (target.localName === 'button') {
+        const action = target.getAttribute("class");
+        const buttons = {
+            add_button: () => DataTable(config, data, true /* inputRow */),
+            edit_button: () => row.innerHTML = renderInput(config, getDataFromRow(row), buttonId),
+            cancel_button: () => DataTable(config),
+            delete_button: () => {
+                deleteElement(buttonId, config);
+                target.disabled = true;
+                target.innerHTML = "видаляю...";
+            },
+            update_button: async () => {
+                const urlToChange = url + '/' + buttonId;
+                const dataToSave = getDataToSave(row);
+                dataToSave && await changeData(dataToSave, urlToChange) && DataTable(config);
+            },
+            save_button: async () => {
+                const dataToSave = getDataToSave(row);
+                dataToSave && await sendData(dataToSave, url) && DataTable(config);
             }
-        }).join(" ");
-        row += '>';
-        row += attributes.options.map((option) => {
-            return `<option value='${option}'>${option}</option>`;
-        }).join("");
-        row += '</select>';
-    } else {
-        row = '<input ';
-        row += attributesKeys.map((key) => {
-            if (key !== 'label') {
-                if (key === 'required' && !attributes[key]) {
-                    return "";
-                } else {
-                    return `${key}='${attributes[key]}'`;
-                }
-            }
-        }).join(" ");
-        row += '>';
+        }
+        buttons[action]?.();
     }
-    return row;
+    if (event.key === 'Enter') {
+        const dataToSave = getDataToSave(row);
+        dataToSave && await sendData(dataToSave, url) && DataTable(config)
+    }
+}
+
+function getHTMLRow(config) {
+    const { options, type = 'text', label, ...attributes } = config;
+    let attributesKeys = Object.entries(attributes).map(([key, value]) => value !== false ? `${key}='${value}'` : "").join(" ");
+    if (type !== 'select') {
+        return `<input type='${type}' ${attributesKeys}>`;
+    }
+    const optionsHtml = options?.map(option =>
+        `<option value='${option}' ${option === config.value ? 'selected' : ''}>${option}</option>`
+    ).join("");
+    return `<select ${attributesKeys}>${optionsHtml}</select>`;
 }
 
 function getValue(config, data, specInput) {
@@ -165,7 +114,7 @@ function renderInput(config, data, id) {
         const cell = inputs.map((inputElement) => buildElement(inputElement, entrie, data)).join("");
         return addTags(TABLE_DATA, cell);
     });
-    const mode = data ? 'saveChanges' : 'addNewData';
+    const mode = data ? 'updateChanges' : 'addNewData';
     cells.push(renderButtons(id, mode));
     const content = cells.join("");
     return data ? content : addTags(TABLE_ROW, content);
@@ -178,9 +127,9 @@ function checkImages(data) {
 function renderButtons(id, action) {
     const modes = {
         standartButtons: () => addTags(TABLE_DATA, `<button data-id=${id} class="delete_button">Видалити дані</button>`) +
-            addTags(TABLE_DATA, `<button data-id=${id} class="change_button">Редагувати</button>`),
-        saveChanges: () => addTags(TABLE_DATA, `<button data-id=${id} class="delete_button">Видалити дані</button>`) +
-            addTags(TABLE_DATA, `<button data-id=${id} class="save_changes_button">Зберегти</button>`),
+            addTags(TABLE_DATA, `<button data-id=${id} class="edit_button">Редагувати</button>`),
+        updateChanges: () => addTags(TABLE_DATA, `<button data-id=${id} class="delete_button">Видалити дані</button>`) +
+            addTags(TABLE_DATA, `<button data-id=${id} class="update_button">Змінити</button>`),
         addNewData: () => addTags(TABLE_DATA, `<button data-id=${id} class="cancel_button">Скасувати</button>`) +
             addTags(TABLE_DATA, `<button class="save_button">Зберегти</button>`)
     }
@@ -210,7 +159,7 @@ function createTableBody(config, data, newRow) {
 function createTableHead(config) {
     let headerRow = config.columns.map((header) =>
         addTags(TABLE_HEADER_DATA, header.title)).join("");
-    const addRowButton = addTags(TABLE_HEADER_DATA, `<button class="add_button">Додати дані</button>`);
+    const addRowButton = `<th colspan="2"><button class="add_button">Додати дані</button></th>`;
     headerRow += addRowButton;
     return addTags(TABLE_HEAD, addTags(TABLE_ROW, headerRow));
 }
@@ -247,7 +196,7 @@ function getDataToSave(inputRow) {
     const inputs = inputRow.querySelectorAll('input, select');
     let isValid = true;
     inputs.forEach(input => {
-        if (!input.checkValidity()) {
+        if (!input.reportValidity()) {
             input.style.outline = "2px solid red";
             isValid = false;
         } else {
@@ -278,7 +227,6 @@ function getDataFromRow(row) {
     }, {});
 }
 
-
 function addTags(tag, data, className, dataValue) {
     if (!className) {
         return `<${tag}>${data}</${tag}>`;
@@ -303,12 +251,22 @@ const config1 = {
         {
             title: 'Ім’я',
             value: 'name',
-            input: { type: 'text' }
+            input: {
+                type: 'text',
+                pattern: '^[A-Za-zА-Яа-яЁёІіЇїЄє]+$',
+                minlength: '2',
+                title: 'Будь ласка, використовуйте лише літери (без цифр та пробілів)'
+            }
         },
         {
             title: 'Прізвище',
             value: 'surname',
-            input: { type: 'text' }
+            input: {
+                type: 'text',
+                pattern: '^[A-Za-zА-Яа-яЁёІіЇїЄє]+$',
+                minlength: '2',
+                title: 'Будь ласка, використовуйте лише літери (без цифр та пробілів)'
+            }
         },
         {
             title: 'Вік',
@@ -344,13 +302,18 @@ const config2 = {
         {
             title: 'Назва',
             value: 'title',
-            input: { type: 'text' }
+            input: {
+                type: 'text',
+                pattern: '^(?!\\s*$).+',
+                minlength: '2',
+                title: 'Будь ласка, використовуйте лише літери (без цифр та пробілів)'
+            }
         },
         {
             title: 'Ціна',
             value: (product) => `${product.price} ${product.currency}`,
             input: [
-                { type: 'number', name: 'price', label: "Ціна" },
+                { type: 'number', name: 'price', label: "Ціна", min: '0', step: '0.1' },
                 { type: 'select', name: 'currency', label: 'Валюта', options: ['$', '€', '₴'], required: false }
             ]
         },
