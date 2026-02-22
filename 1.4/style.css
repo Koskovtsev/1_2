@@ -1,17 +1,10 @@
   :root {
-      /* Google Dark Theme Palette */
       --bg-main: #202124;
-      /* Основний фон */
       --bg-surface: #2d2e31;
-      /* Фон таблиці та елементів */
       --text-primary: #e8eaed;
-      /* Світло-сірий текст */
       --text-secondary: #9aa0a6;
-      /* Приглушений текст */
       --accent-blue: #8ab4f8;
-      /* М'який синій акцент */
       --border-color: #3c4043;
-      /* Тонкі межі */
   }
 
   body {
@@ -99,7 +92,7 @@
       height: 40px;
       /* Фіксована висота для елементів форми */
       margin: 0;
-      background-color: #35363a;
+      background-color: #72747b;
       color: white;
       border: 1px solid var(--border-color);
       padding: 8px 12px;

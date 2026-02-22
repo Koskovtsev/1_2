@@ -242,7 +242,7 @@ function getAge(birthday) {
 }
 
 function getColorLabel(color) {
-    return `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 4px;"></div>`;
+    return `<div style="background-color: ${color}; width: 80px; height: 40px; border-radius: 4px;"></div>`;
 }
 
 const config1 = {
@@ -281,7 +281,10 @@ const config1 = {
         },
         {
             title: 'Фото',
-            value: (user) => `<img src="${user.avatar}" alt="${user.name} ${user.surname}"/>`,
+            value: (user) => {
+                const defaultImg = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+                return `<img src="${user.avatar}" onerror="this.src='${defaultImg}'" alt="${user.name} ${user.surname}"/>`;
+            },
             input:
             {
                 type: 'url',
