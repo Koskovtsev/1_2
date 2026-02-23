@@ -27,6 +27,7 @@
       max-width: 1100px;
       background-color: var(--bg-surface);
       margin: 0 auto;
+      margin-bottom: 20px;
       border-radius: 8px;
       overflow: hidden;
       border: 1px solid var(--border-color);
@@ -34,9 +35,8 @@
       border-collapse: separate;
   }
 
-  tr {
+  tbody tr {
       height: 130px;
-      /* Встановлюємо жорстку висоту */
   }
 
   th {
@@ -55,27 +55,23 @@
       border-bottom: 1px solid var(--border-color);
       color: var(--text-primary);
       vertical-align: middle;
+      text-align: center;
   }
 
-  td,
-  th {
-      /* Дозволяємо тексту переноситись, якщо він довгий */
+  td {
       overflow: hidden;
       text-overflow: ellipsis;
       word-wrap: break-word;
       height: 130px;
-      /* Дублюємо для клітинок */
       padding: 8px 16px;
       box-sizing: border-box;
       vertical-align: middle;
   }
 
-  /* Підсвічування рядка при наведенні */
   tbody tr:hover {
-      background-color: rgba(255, 255, 255, 0.04);
+      background-color: rgba(255, 255, 255, 0.05);
   }
 
-  /* Круглі аватарки */
   img {
       width: 100px;
       height: 100px;
@@ -86,11 +82,8 @@
       border: 1px solid var(--border-color);
   }
 
-  /* Поля вводу в темній темі */
-  input,
-  select {
+  input, select {
       height: 40px;
-      /* Фіксована висота для елементів форми */
       margin: 0;
       background-color: #72747b;
       color: white;
@@ -99,19 +92,15 @@
       border-radius: 4px;
       outline: none;
       width: 100%;
-      /* Тепер інпут завжди займає 100% ширини своєї фіксованої td */
       max-width: 100%;
       box-sizing: border-box;
-      /* Важливо! Враховує padding у ширині */
   }
 
-  input:focus,
-  select:focus {
+  input:focus, select:focus {
       border-color: var(--accent-blue);
       box-shadow: 0 0 0 1px var(--accent-blue);
   }
 
-  /* Кнопки в стилі Google */
   button {
       padding: 8px 16px;
       border: 1px solid var(--border-color);
@@ -126,18 +115,16 @@
   }
 
   button:hover {
-      background-color: rgba(138, 180, 248, 0.08);
+      background-color: rgba(138, 180, 248, 0.1);
       border-color: var(--accent-blue);
   }
 
-  /* Кольорові кнопки для акцентів */
   .delete_button {
       color: #f28b82;
-      /* М'який червоний */
   }
 
   .delete_button:hover {
-      background-color: rgba(242, 139, 130, 0.08);
+      background-color: rgba(242, 139, 130, 0.1);
       border-color: #f28b82;
   }
 
@@ -153,7 +140,6 @@
 
   .save_button {
       background-color: #81c995;
-      /* М'який зелений */
       color: var(--bg-main);
       border: none;
   }

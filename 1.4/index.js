@@ -35,6 +35,30 @@ async function loadData(config) {
     }
 }
 
+async function sendData(data, url, method) {
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        return response.ok;
+    } catch (error) {
+        console.error("Network error", error);
+        return false;
+    }
+}
+
+function deleteElement(id, config) {
+    fetch(config.apiUrl + `/${id}`, {
+        method: "DELETE"
+    }).then(res => {
+        if (res.ok) {
+            DataTable(config);
+        }
+    })
+}
+
 async function handleTableAction(event, config, data) {
     const target = event.target;
     const row = target.closest('tr');
@@ -54,18 +78,24 @@ async function handleTableAction(event, config, data) {
             update_button: async () => {
                 const urlToChange = url + '/' + buttonId;
                 const dataToSave = getDataToSave(row);
-                dataToSave && await changeData(dataToSave, urlToChange) && DataTable(config);
+                if (dataToSave) {
+                   await sendData(dataToSave, urlToChange, "PUT") ? DataTable(config) : alert("Change data error!")
+                }
             },
             save_button: async () => {
                 const dataToSave = getDataToSave(row);
-                dataToSave && await sendData(dataToSave, url) && DataTable(config);
+                if (dataToSave) {
+                    await sendData(dataToSave, url, "POST") ? DataTable(config) : alert("Save data error!");
+                }
             }
         }
         buttons[action]?.();
     }
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && buttonId) {
         const dataToSave = getDataToSave(row);
-        dataToSave && await sendData(dataToSave, url) && DataTable(config)
+        if (dataToSave) {
+            await sendData(dataToSave, url, "POST") ? DataTable(config) : alert("Save data error!");
+        }
     }
 }
 
@@ -164,33 +194,6 @@ function createTableHead(config) {
     return addTags(TABLE_HEAD, addTags(TABLE_ROW, headerRow));
 }
 
-async function sendData(data, url) {
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    });
-    return response.ok;
-}
-
-async function changeData(data, url) {
-    const response = await fetch(url, {
-        method: "PUT",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-    });
-    return response.ok;
-}
-
-function deleteElement(id, config) {
-    fetch(config.apiUrl + `/${id}`, {
-        method: "DELETE"
-    }).then(res => {
-        if (res.ok) {
-            DataTable(config);
-        }
-    })
-}
 
 function getDataToSave(inputRow) {
     const inputs = inputRow.querySelectorAll('input, select');
@@ -307,7 +310,7 @@ const config2 = {
             value: 'title',
             input: {
                 type: 'text',
-                pattern: '^(?!\\s*$).+',
+                pattern: '^[A-Za-zА-Яа-яЁёІіЇїЄє].*',
                 minlength: '2',
                 title: 'Будь ласка, використовуйте лише літери (без цифр та пробілів)'
             }
