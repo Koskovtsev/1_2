@@ -111,16 +111,6 @@ function getHTMLRow(config) {
     return `<select ${attributesKeys}>${optionsHtml}</select>`;
 }
 
-function getValue(config, data, specInput) {
-    if (typeof config.value === 'string') {
-        return data[config.value];
-    }
-    if (specInput.type === 'date') {
-        return data[specInput.name].slice(0, 10);
-    }
-    return data[specInput.name];
-}
-
 function buildElement(input, entrie, data) {
     const defaultAttributes = {
         type: 'text',
