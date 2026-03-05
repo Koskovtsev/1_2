@@ -287,7 +287,12 @@ const config1 = {
             }
         }
     ],
-    apiUrl: "https://mock-api.shpp.me/akoskovtsev/users"
+    apiUrl: "https://mock-api.shpp.me/akoskovtsev/users",
+    condition: {
+        exclude: [{
+
+        }]
+    }
 };
 
 DataTable(config1);
