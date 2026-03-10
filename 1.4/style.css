@@ -110,7 +110,7 @@
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
-      transition: background 0.2s, border 0.2s;
+      /* transition: background 0.2s, border 0.2s; */
       margin-right: 8px;
   }
 

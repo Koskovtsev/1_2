@@ -290,8 +290,9 @@ const config1 = {
     apiUrl: "https://mock-api.shpp.me/akoskovtsev/users",
     condition: {
         exclude: [{
-
-        }]
+            surname: 'Smith'
+        }],
+        sortBy: ['age']
     }
 };
 
